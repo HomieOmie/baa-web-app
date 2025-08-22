@@ -51,11 +51,12 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
             // Parse request body into a Map
             Map<String, Object> body = objectMapper.readValue(request.getBody(), Map.class);
             String action = (String) body.get("action");
+            String authHeader;
 
             switch (action) {
                 case "signup":
                     // Get the JWT token from the Authorization header
-                    String authHeader = request.getHeaders().get("Authorization");
+                    authHeader = request.getHeaders().get("Authorization");
                     if (authHeader == null || !isAdmin(authHeader)) {
                         statusCode = 403;
                         responseMap.put("error", "Forbidden: admin access required");
@@ -75,6 +76,16 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
                     break;
                 case "login":
                     responseMap.put("result", login(body));
+                    break;
+                case "listUsers":
+                    // Get the JWT token from the Authorization header
+                    authHeader = request.getHeaders().get("Authorization");
+                    if (authHeader == null || !isAdmin(authHeader)) {
+                        statusCode = 403;
+                        responseMap.put("error", "Forbidden: admin access required");
+                    } else {
+                        responseMap.put("result", listAllUsers());
+                    }
                     break;
                 default:
                     statusCode = 400;
@@ -174,6 +185,24 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
             throw new RuntimeException("Login failed: " + e.awsErrorDetails().errorMessage());
         }
     }
+
+    private List<Map<String, String>> listAllUsers() {
+        ListUsersRequest request = ListUsersRequest.builder()
+                .userPoolId(USER_POOL_ID)
+                .limit(60) // adjust as needed
+                .build();
+
+        ListUsersResponse response = cognitoClient.listUsers(request);
+
+        // Map to a simpler representation
+        return response.users().stream().map(user -> {
+            Map<String, String> userMap = new HashMap<>();
+            userMap.put("username", user.username());
+            user.attributes().forEach(attr -> userMap.put(attr.name(), attr.value()));
+            return userMap;
+        }).toList();
+    }
+
 
     private boolean isAdmin(String token) {
         try {

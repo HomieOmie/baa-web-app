@@ -1,10 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import { Box, AppBar, Toolbar, Button, Typography, ThemeProvider, createTheme } from "@mui/material";
-import { useAuth, AuthProvider } from "./AuthContext";
-import Login from "./Login";
-import SignUp from "./SignUp";
-import {ConfirmSignup} from "./ConfirmSignUp.tsx";
+import { useAuth, AuthProvider } from "./components/AuthContext.tsx";
+import Login from "./components/Login.tsx";
+import SignUp from "./components/SignUp.tsx";
+import {ConfirmSignup} from "./components/ConfirmSignUp.tsx";
 
 // Error Boundary to catch runtime errors
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -49,9 +49,6 @@ function Navbar() {
                 </Typography>
                 <Button color="inherit" component={Link} to="/signup">
                     Sign Up
-                </Button>
-                <Button color="inherit" component={Link} to="/confirm-signup">
-                    Confirm SignUp
                 </Button>
                 <Button color="inherit" onClick={logout}>
                     Logout

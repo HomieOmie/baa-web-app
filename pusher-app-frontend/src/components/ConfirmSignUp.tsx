@@ -81,7 +81,6 @@ export const ConfirmSignup: React.FC = () => {
                     <Button
                         fullWidth
                         variant="contained"
-                        color="#1D2180"
                         sx={{ mt: 2 }}
                         onClick={handleConfirm}
                     >

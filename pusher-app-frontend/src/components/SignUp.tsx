@@ -9,25 +9,19 @@ import {
     MenuItem,
 } from "@mui/material";
 import { useAuth } from "./AuthContext.tsx";
-import LogoutButton from "./Logout.tsx";
 
 
 export default function SignupPage() {
-    const [form, setForm] = useState({
-        username: "",
-        email: "",
-        phone_number: "",
-        birthday: "",
-        sex: "",
-        password: "",
-    });
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone_number, setPhoneNumber] = useState('')
+    const [birthday, setBirthday] = useState('')
+    const [sex, setSex] = useState('')
+
+
 
     const [message, setMessage] = useState("");
     const { accessToken, idToken, refreshToken } = useAuth();
-
-    // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    //     setForm({ ...form, [e.target.name]: e.target.value });
-    // };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,7 +39,11 @@ export default function SignupPage() {
                 },
                 body: JSON.stringify({
                     action: "signup",
-                    ...form,
+                    username: username,
+                    email: email,
+                    phone_number: phone_number,
+                    birthday: birthday,
+                    sex: sex
                 }),
             });
 
@@ -80,8 +78,10 @@ export default function SignupPage() {
                         fullWidth
                         label="Username"
                         name="username"
-                        value={form.username}
-                        // onChange={handleChange}
+                        value={username}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setUsername(event.target.value);
+                        }}
                         margin="normal"
                         required
                     />
@@ -90,8 +90,10 @@ export default function SignupPage() {
                         label="Email"
                         name="email"
                         type="email"
-                        value={form.email}
-                        // onChange={handleChange}
+                        value={email}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setEmail(event.target.value);
+                        }}
                         margin="normal"
                         required
                     />
@@ -99,8 +101,10 @@ export default function SignupPage() {
                         fullWidth
                         label="Phone Number (+15551234567)"
                         name="phone_number"
-                        value={form.phone_number}
-                        // onChange={handleChange}
+                        value={phone_number}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setPhoneNumber(event.target.value);
+                        }}
                         margin="normal"
                         required
                     />
@@ -109,8 +113,10 @@ export default function SignupPage() {
                         label="Birthday"
                         name="birthday"
                         type="date"
-                        value={form.birthday}
-                        // onChange={handleChange}
+                        value={birthday}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setBirthday(event.target.value);
+                        }}
                         margin="normal"
                         InputLabelProps={{ shrink: true }}
                         required
@@ -120,8 +126,10 @@ export default function SignupPage() {
                         select
                         label="Sex"
                         name="sex"
-                        value={form.sex}
-                        // onChange={handleChange}
+                        value={sex}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            setSex(event.target.value);
+                        }}
                         margin="normal"
                         required
                     >
@@ -129,16 +137,6 @@ export default function SignupPage() {
                         <MenuItem value="male">Male</MenuItem>
                         <MenuItem value="female">Female</MenuItem>
                     </TextField>
-                    <TextField
-                        fullWidth
-                        label="Password"
-                        name="password"
-                        type="password"
-                        value={form.password}
-                        // onChange={handleChange}
-                        margin="normal"
-                        required
-                    />
 
                     {message && (
                         <Typography variant="body2" color="error" sx={{ mt: 1 }}>

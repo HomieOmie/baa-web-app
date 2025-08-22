@@ -1,4 +1,4 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./AuthContext.tsx";
 
 export default function LogoutButton() {
     const { logout } = useAuth();
