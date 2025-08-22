@@ -4,11 +4,14 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -51,8 +54,18 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
 
             switch (action) {
                 case "signup":
+                    // Get the JWT token from the Authorization header
+                    String authHeader = request.getHeaders().get("Authorization");
+                    if (authHeader == null || !isAdmin(authHeader)) {
+                        statusCode = 403;
+                        responseMap.put("error", "Forbidden: admin access required");
+                    } else {
+                        responseMap.put("result", signup(body));
+                    }
+
                     responseMap.put("result", signup(body));
                     break;
+
                 case "confirmSignup":
                     // Extract username and password from the request body
                     String username = (String) body.get("username");
@@ -94,13 +107,18 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
     private String signup(Map<String, Object> body) {
         String username = (String) body.get("username");
         String email = (String) body.get("email");
-        String temporaryPassword = (String) body.get("password"); // can also generate randomly
+        String phoneNumber = (String) body.get("phone_number"); // e.g., "+15551234567"
+        String birthday = (String) body.get("birthday");        // e.g., "1990-01-01"
+        String sex = (String) body.get("sex");                  // e.g., "male" or "female"
 
         AdminCreateUserRequest request = AdminCreateUserRequest.builder()
                 .userPoolId(USER_POOL_ID)
                 .username(username)
                 .userAttributes(
-                        AttributeType.builder().name("email").value(email).build()
+                        AttributeType.builder().name("email").value(email).build(),
+                        AttributeType.builder().name("phone_number").value(phoneNumber).build(),
+                        AttributeType.builder().name("birthdate").value(birthday).build(),
+                        AttributeType.builder().name("gender").value(sex).build()
                 )
                 .desiredDeliveryMediums(DeliveryMediumType.EMAIL) // optional: send email if needed
                 .build();
@@ -156,5 +174,16 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
             throw new RuntimeException("Login failed: " + e.awsErrorDetails().errorMessage());
         }
     }
+
+    private boolean isAdmin(String token) {
+        try {
+            DecodedJWT jwt = JWT.decode(token);
+            List<String> groups = jwt.getClaim("cognito:groups").asList(String.class);
+            return groups != null && groups.contains("admin");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 
 }

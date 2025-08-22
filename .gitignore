@@ -4,3 +4,5 @@ infrastructure/dist/
 infrastructure/node_modules
 infrastructure/cdk.out/
 infrastructure/package-lock.json
+services/*/target/
+*.iml
