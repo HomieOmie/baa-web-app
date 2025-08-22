@@ -71,7 +71,8 @@ export class CognitoAuthStack extends cdk.Stack {
           "cognito-idp:AdminGetUser",
           "cognito-idp:AdminCreateUser",
           "cognito-idp:AdminConfirmSignUp",
-          "cognito-idp:AdminSetUserPassword"
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:InitiateAuth"
       ],
       resources: [this.userPool.userPoolArn],
     }));
@@ -120,6 +121,24 @@ export class CognitoAuthStack extends cdk.Stack {
       });
 
       new cdk.CfnOutput(this, 'ApiEndpoint', { value: this.api.url });
+
+      // --- /login resource ---
+      const loginResource = this.api.root.addResource('login');
+
+      loginResource.addMethod(
+          'POST',
+          new apigateway.LambdaIntegration(this.authLambda, { proxy: true }),
+          { authorizationType: apigateway.AuthorizationType.NONE }
+      );
+
+      // Enable CORS
+      loginResource.addCorsPreflight({
+          allowOrigins: apigateway.Cors.ALL_ORIGINS,
+          allowMethods: ['POST', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization'],
+      });
+
+      new cdk.CfnOutput(this, 'LoginApiEndpoint', { value: this.api.url });
 
   }
 }

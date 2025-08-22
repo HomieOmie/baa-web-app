@@ -60,6 +60,9 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
                     boolean confirmed = confirmSignup(username, password);
                     responseMap.put("result", confirmed ? "User confirmed successfully." : "Failed to confirm user");
                     break;
+                case "login":
+                    responseMap.put("result", login(body));
+                    break;
                 default:
                     statusCode = 400;
                     responseMap.put("error", "Unknown action: " + action);
@@ -124,4 +127,34 @@ public class AuthServiceMain implements RequestHandler<APIGatewayProxyRequestEve
             return false;
         }
     }
+
+    private Map<String, String> login(Map<String, Object> body) {
+        String username = (String) body.get("username");
+        String password = (String) body.get("password");
+
+        try {
+            Map<String, String> authParams = new HashMap<>();
+            authParams.put("USERNAME", username);
+            authParams.put("PASSWORD", password);
+
+            InitiateAuthRequest request = InitiateAuthRequest.builder()
+                    .clientId(CLIENT_ID)
+                    .authFlow(AuthFlowType.USER_PASSWORD_AUTH)
+                    .authParameters(authParams)
+                    .build();
+
+            InitiateAuthResponse result = cognitoClient.initiateAuth(request);
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("idToken", result.authenticationResult().idToken());
+            tokens.put("accessToken", result.authenticationResult().accessToken());
+            tokens.put("refreshToken", result.authenticationResult().refreshToken());
+
+            return tokens;
+
+        } catch (CognitoIdentityProviderException e) {
+            throw new RuntimeException("Login failed: " + e.awsErrorDetails().errorMessage());
+        }
+    }
+
 }
