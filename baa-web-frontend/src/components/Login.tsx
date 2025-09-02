@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { useAuth } from "./AuthContext.tsx";
 
-
 const theme = createTheme({
     palette: {
         primary: { main: "#1976d2" }, // blue

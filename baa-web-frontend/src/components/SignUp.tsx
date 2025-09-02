@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import { useAuth } from "./AuthContext.tsx";
 
-
 export default function SignupPage() {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');

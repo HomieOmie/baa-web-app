@@ -8,7 +8,6 @@ import {
     Typography,
 } from "@mui/material";
 
-
 export const ConfirmSignup: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
