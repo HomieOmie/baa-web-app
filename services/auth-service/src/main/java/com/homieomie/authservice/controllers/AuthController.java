@@ -2,31 +2,58 @@ package com.homieomie.authservice.controllers;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.homieomie.authservice.models.*;
+import com.homieomie.authservice.models.LoginRequest;
+import com.homieomie.authservice.models.ConfirmSignupRequest;
+import com.homieomie.authservice.models.SignupRequest;
 import com.homieomie.authservice.services.CognitoService;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
+/**
+ * Controller responsible for routing authentication-related requests
+ * to the appropriate service methods. Acts as a dispatcher between
+ * API Gateway events and AWS Cognito service calls.
+ */
 public class AuthController {
 
+    /**
+     * Service responsible for interacting with AWS Cognito.
+     */
     private final CognitoService cognitoService = new CognitoService();
+
+    /**
+     * JSON mapper used for converting request bodies into model objects.
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Validator used to enforce model constraints.
+     */
     private final Validator validator;
 
+    /**
+     * Constructs an {@code AuthController} and initializes
+     * the validator for request model validation.
+     */
     public AuthController() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         this.validator = factory.getValidator();
     }
 
+    /**
+     * Routes an incoming API Gateway request to the appropriate
+     * authentication handler based on the provided action.
+     *
+     * @param request the API Gateway request event
+     * @return the API Gateway response event containing the result
+     */
     public APIGatewayProxyResponseEvent routeRequest(APIGatewayProxyRequestEvent request) {
         Map<String, Object> responseMap = new HashMap<>();
         int statusCode = 200;
@@ -46,7 +73,8 @@ public class AuthController {
                     responseMap.put("result", cognitoService.signup(signupRequest, request.getHeaders()));
                 }
                 case "confirmSignup" -> {
-                    ConfirmSignupRequest confirmSignupRequest = objectMapper.convertValue(body, ConfirmSignupRequest.class);
+                    ConfirmSignupRequest confirmSignupRequest = objectMapper.convertValue(
+                            body, ConfirmSignupRequest.class);
                     validate(confirmSignupRequest);
                     responseMap.put("result", cognitoService.confirmSignup(confirmSignupRequest));
                 }
@@ -60,8 +88,13 @@ public class AuthController {
                     responseMap.put("error", "Unknown action: " + action);
                 }
             }
-
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {   // Jackson parsing
+            statusCode = 400;
+            responseMap.put("error", "Invalid JSON: " + e.getOriginalMessage());
+        } catch (IllegalArgumentException e) {   // validation failures
+            statusCode = 400;
+            responseMap.put("error", e.getMessage());
+        } catch (RuntimeException e) {           // unexpected runtime issues
             statusCode = 500;
             responseMap.put("error", e.getMessage());
         }
@@ -69,6 +102,12 @@ public class AuthController {
         return buildResponse(statusCode, responseMap);
     }
 
+    /**
+     * Validates a given request DTO against its declared constraints.
+     *
+     * @param dto the object to validate
+     * @throws IllegalArgumentException if validation fails
+     */
     private void validate(Object dto) {
         Set<ConstraintViolation<Object>> violations = validator.validate(dto);
         if (!violations.isEmpty()) {
@@ -80,17 +119,32 @@ public class AuthController {
         }
     }
 
+    /**
+     * Builds an API Gateway response object with the given
+     * status code and body.
+     *
+     * @param statusCode the HTTP status code
+     * @param body the response body
+     * @return the constructed API Gateway response event
+     */
     private APIGatewayProxyResponseEvent buildResponse(int statusCode, Map<String, Object> body) {
         try {
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(statusCode)
                     .withHeaders(corsHeaders())
                     .withBody(objectMapper.writeValueAsString(body));
-        } catch (Exception e) {
-            return new APIGatewayProxyResponseEvent().withStatusCode(500).withBody("{\"error\":\"Serialization failed\"}");
+        } catch (JsonProcessingException e) { // narrowed
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(500)
+                    .withBody("{\"error\":\"Serialization failed\"}");
         }
     }
 
+    /**
+     * Returns CORS headers required for API Gateway responses.
+     *
+     * @return a map of CORS headers
+     */
     private Map<String, String> corsHeaders() {
         return Map.of(
                 "Content-Type", "application/json",
@@ -100,7 +154,15 @@ public class AuthController {
         );
     }
 
+    /**
+     * Builds a simple CORS preflight response for API Gateway.
+     *
+     * @return the API Gateway response event for CORS
+     */
     private APIGatewayProxyResponseEvent corsResponse() {
-        return new APIGatewayProxyResponseEvent().withStatusCode(200).withHeaders(corsHeaders()).withBody("");
+        return new APIGatewayProxyResponseEvent()
+                .withStatusCode(200)
+                .withHeaders(corsHeaders())
+                .withBody("");
     }
 }

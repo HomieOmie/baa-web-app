@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+
+    <!-- Import the full Google ruleset -->
+    <property name="severity" value="error"/>
+
+    <!-- All Google modules here... -->
+    <module name="TreeWalker">
+        <module name="OuterTypeFilename"/>
+        <module name="AvoidStarImport"/> <!-- Already in Google, but we keep -->
+        <module name="UnusedImports"/>
+        <module name="CustomImportOrder" />
+        <module name="OneTopLevelClass"/>
+        <module name="OverloadMethodsDeclarationOrder"/>
+        <module name="NeedBraces"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="OneStatementPerLine"/>
+        <module name="OperatorWrap"/>
+        <module name="EmptyLineSeparator"/>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="ParenPad"/>
+        <module name="NoWhitespaceBeforeCaseDefaultColon"/>
+        <module name="MatchXpath">
+            <property name="query"
+                      value="//METHOD_DEF[.//LITERAL_PRIVATE
+                  and following-sibling::METHOD_DEF[.//LITERAL_PUBLIC]]"/>
+            <message key="matchxpath.match"
+                     value="Private methods must appear after public methods"/>
+        </module>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="ArrayTypeStyle"/>
+        <module name="FallThrough"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="AnnotationLocation"/>
+        <module name="InvalidJavadocPosition"/>
+        <module name="ParameterName"/>
+        <module name="LocalVariableName"/>
+        <module name="SingleLineJavadoc"/>
+        <module name="MissingJavadocType"/>
+        <module name="MissingJavadocMethod">
+            <property name="scope" value="private"/>
+        </module>
+        <module name="JavadocVariable">
+            <!-- Require Javadocs on ALL fields, including private -->
+            <property name="scope" value="private"/>
+        </module>
+
+
+    </module>
+
+    <module name="LineLength">
+        <property name="max" value="120"/> <!-- or 100, 80, etc. -->
+    </module>
+</module>
