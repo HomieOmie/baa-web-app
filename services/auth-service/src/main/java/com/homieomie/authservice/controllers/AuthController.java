@@ -83,6 +83,9 @@ public class AuthController {
                     validate(loginRequest);
                     responseMap.put("result", cognitoService.login(loginRequest));
                 }
+                case "listUsers" -> {
+                    responseMap.put("result", cognitoService.listUsers(request.getHeaders()));
+                }
                 default -> {
                     statusCode = 400;
                     responseMap.put("error", "Unknown action: " + action);

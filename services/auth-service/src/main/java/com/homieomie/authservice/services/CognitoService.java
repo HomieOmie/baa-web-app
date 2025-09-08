@@ -6,14 +6,8 @@ import com.homieomie.authservice.models.ConfirmSignupRequest;
 import com.homieomie.authservice.models.LoginRequest;
 import com.homieomie.authservice.models.SignupRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.DeliveryMediumType;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminCreateUserRequest;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminCreateUserResponse;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.InitiateAuthRequest;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.InitiateAuthResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,5 +142,33 @@ public class CognitoService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public Map<String, String> listUsers(Map<String, String> headers) {
+        String authHeader = headers.get("Authorization");
+        if (authHeader == null || !isAdmin(authHeader)) {
+            throw new RuntimeException("Forbidden: admin access required");
+        }
+
+        ListUsersRequest request = ListUsersRequest.builder()
+                .userPoolId(USER_POOL_ID)
+                .limit(60) // max per request
+                .build();
+
+        ListUsersResponse response = cognitoClient.listUsers(request);
+
+        Map<String, String> result = new HashMap<>();
+        for (UserType user : response.users()) {
+            String username = user.username();
+            String email = user.attributes().stream()
+                    .filter(attr -> "email".equals(attr.name()))
+                    .map(attr -> attr.value())
+                    .findFirst()
+                    .orElse("");
+            result.put(username, email);
+        }
+
+        return result;
+
     }
 }
